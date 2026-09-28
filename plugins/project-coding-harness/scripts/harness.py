@@ -13,10 +13,11 @@ from urllib.parse import urlsplit
 from store import ACTIONS, Store, dispatch
 
 UI = Path(__file__).resolve().parent.parent / "ui" / "dashboard.html"
-URI = "ui://project-coding-harness/dashboard-v1.html"
+URI = "ui://project-coding-harness/dashboard-v2.html"
 DESCRIPTIONS = {
     "preferences": "Read only project usage settings and whether analysis exists; no memory contents or source scan. For substantive coding activation checks, not trivial tasks. A conversation-only opt-out needs no tool call or persistent setting.",
     "status": "Read project memory, settings, pending user requests and proposals. project_root must be the user's actual project, never the plugin installation directory.",
+    "panel": "Open a compact static settings snapshot with a Settings button. No progress tracking or automatic refresh. Open once when harness use is active, not every turn.",
     "dashboard": "Show project controls and return a loopback browser fallback URL. No analysis is performed by opening it.",
     "configure": "Save explicitly requested project settings from conversation or UI. Partial payload: usage_mode (auto|on_request), offer_setup (boolean), review_depth (standard|deep), max_rounds (integer 1..10). Omitted fields remain unchanged. Do not save conversation-only opt-outs. Does not analyze the project.",
     "request_analysis": "ONLY when user explicitly requests analysis/refresh. payload: mode (analyze|refresh). Creates a request; model must inspect actual source then save_analysis. No analysis is done by this tool.",
@@ -36,7 +37,7 @@ def tools_list():
                 "inputSchema": {"type": "object", "properties": {"project_root": {"type": "string"}, "payload": {"type": "object"}},
                                 "required": ["project_root"], "additionalProperties": False},
                 "annotations": {"readOnlyHint": name in ("status", "preferences"), "destructiveHint": False, "openWorldHint": False}}
-        if name == "dashboard":
+        if name in ("dashboard", "panel"):
             tool["_meta"] = {"ui": {"resourceUri": URI}, "openai/outputTemplate": URI}
         tools.append(tool)
     return tools
@@ -75,9 +76,9 @@ class Dashboard:
                 route = urlsplit(self.path).path.split("/")[-1]
                 if route == "":
                     return self.reply(200, UI.read_text(encoding="utf-8"), "text/html; charset=utf-8")
-                if route == "status":
+                if route in ("status", "preferences"):
                     try:
-                        return self.reply(200, json.dumps(Store(dashboard.root).status(), ensure_ascii=False))
+                        return self.reply(200, json.dumps(getattr(Store(dashboard.root), route)(), ensure_ascii=False))
                     except Exception as exc:
                         return self.reply(400, json.dumps({"error": str(exc)}))
                 self.reply(404, '{"error":"Not found"}')
@@ -142,12 +143,13 @@ class MCP:
                     raise ValueError("Unknown tool")
                 args = params.get("arguments", {})
                 action, root = name[8:], args["project_root"]
-                if action == "dashboard":
+                if action in ("dashboard", "panel"):
                     root = str(Store(root).root)
                     if root not in self.dashboards:
                         self.dashboards[root] = Dashboard(root)
-                    result = Store(root).status()
-                    result["dashboard_url"] = self.dashboards[root].url
+                    result = Store(root).status() if action == "dashboard" else Store(root).preferences()
+                    result["view"] = "settings" if action == "dashboard" else "panel"
+                    result["dashboard_url"] = self.dashboards[root].url + ("#settings" if action == "dashboard" else "")
                 else:
                     result = dispatch(action, root, args.get("payload", {}))
                 return {"content": [{"type": "text", "text": json.dumps(result, ensure_ascii=False)}], "structuredContent": result}

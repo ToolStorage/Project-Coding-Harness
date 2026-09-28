@@ -30,7 +30,16 @@ async function main() {
     const page = await browser.newPage({ viewport: { width: 960, height: 1000 } });
     const errors = [];
     page.on('pageerror', e => errors.push(e.message));
+    const requests = [];
+    page.on('request', r => requests.push(r.url()));
     await page.goto(url);
+    await page.locator('#panel-values').filter({ hasText: '최대' }).waitFor();
+    assert.equal(await page.locator('#settings').isVisible(), false);
+    assert.equal(requests.filter(u => u.endsWith('/status')).length, 0);
+    const snapshotRequests = requests.length;
+    await page.waitForTimeout(500);
+    assert.equal(requests.length, snapshotRequests);
+    await page.click('#open-settings');
     await page.locator('#badge').filter({ hasText: '미분석' }).waitFor();
     await page.selectOption('#depth', 'deep');
     await page.fill('#rounds', '2');
@@ -43,6 +52,8 @@ async function main() {
     await page.locator('#message').filter({ hasText: '프로젝트 사용 설정을 저장했습니다' }).waitFor();
     assert.deepEqual(call('preferences').settings, { review_depth: 'deep', max_rounds: 2, usage_mode: 'on_request', offer_setup: false });
     await page.reload();
+    await page.locator('#panel-values').filter({ hasText: '요청할 때만' }).waitFor();
+    await page.click('#open-settings');
     await page.waitForFunction(() => document.querySelector('#usage').value === 'on_request');
     assert.equal(await page.inputValue('#offer'), 'no');
     // Conversation tools use the same partial configure contract; UI sees changes on refresh.
@@ -50,6 +61,15 @@ async function main() {
     await page.click('#reload');
     await page.waitForFunction(() => document.querySelector('#usage').value === 'auto');
     assert.equal(await page.inputValue('#offer'), 'yes');
+    await page.click('#back-panel');
+    await page.locator('#panel-values').filter({ hasText: '최대 2회' }).waitFor();
+    const idleRequests = requests.length;
+    call('configure', { max_rounds: 3 });
+    await page.waitForTimeout(500);
+    assert.equal(requests.length, idleRequests);
+    assert.ok((await page.textContent('#panel-values')).includes('최대 2회'));
+    await page.click('#open-settings');
+    await page.waitForFunction(() => document.querySelector('#rounds').value === '3');
     await page.click('#analyze');
     await page.locator('#handoff:not([hidden])').waitFor();
     const request = call('status').requests.find(r => r.status === 'pending');
@@ -89,7 +109,7 @@ async function main() {
         if (m.method === 'ui/initialize') frame.contentWindow.postMessage({ jsonrpc:'2.0', method:'ui/notifications/tool-result', params:{ structuredContent:snapshot } }, '*');
       });
       frame.srcdoc = widget;
-    }, { widget, snapshot: call('status') });
+    }, { widget, snapshot: { ...call('status'), view: 'settings' } });
     const frame = page.frameLocator('#widget');
     await frame.locator('#badge').filter({ hasText: '분석됨' }).waitFor();
     await frame.locator('#refresh').click();

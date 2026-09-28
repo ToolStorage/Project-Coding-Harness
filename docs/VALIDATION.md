@@ -55,3 +55,7 @@ Updated skill instructions and dashboard help so substantial changes prompt for 
 ## Project usage controls update
 
 Python suite: **20 passed, 1 skipped** (Windows symlink permission). Added read-only preferences checks, legacy setting defaults, partial update preservation, invalid value rejection, and no implicit memory creation. Browser suite passed with usage controls saved/reloaded and changes through the conversation tool contract reflected after refresh. Natural-language onboarding and intent routing remain skill-guided, not independently model-evaluated.
+
+## Static panel update
+
+Python: 21 passed, 1 skipped (Windows symlink privilege). Browser suite passed: compact view reads preferences only, idle panel makes no repeat requests, external settings changes leave the snapshot unchanged until Settings is opened, and settings/back navigation preserves saved values. Existing analysis, consent and simulated embedded UI checks also passed. UI resource version advanced to v2.

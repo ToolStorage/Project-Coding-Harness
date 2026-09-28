@@ -222,6 +222,21 @@ class ProjectCase(unittest.TestCase):
                 self.store.configure(payload)
             self.assertEqual(self.store.preferences()["settings"], settings)
 
+    def test_panel_returns_only_preferences(self):
+        mcp = MCP()
+        try:
+            with patch.object(Store, "status", side_effect=AssertionError("full status read")):
+                result = mcp.handle({"method": "tools/call", "params": {"name": "harness_panel", "arguments": {"project_root": str(self.root)}}})
+            self.assertNotIn("isError", result)
+            data = result["structuredContent"]
+            self.assertEqual(data["view"], "panel")
+            self.assertNotIn("sections", data)
+            self.assertNotIn("runs", data)
+            self.assertFalse(self.store.base.exists())
+        finally:
+            for dashboard in mcp.dashboards.values():
+                dashboard.close()
+
     def test_settings_validation(self):
         for value in (0, 11, True, 1.5, "3"):
             with self.assertRaises(ValueError):
