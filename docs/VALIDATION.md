@@ -47,3 +47,7 @@ For optional browser verification install Playwright in a development environmen
 ## Bundled MCP update
 
 Validated marketplace installation and actual MCP startup using an isolated Codex app-server (no model turn). The portable manifest requires its Agent Plugins schema; `${PLUGIN_ROOT}` resolves to the install cache. All 10 harness tools were discovered. `--project` now binds the server to one canonical project root and rejects read/write requests for other roots. The existing embedded UI limitation above still applies.
+
+## Proportional verification policy update
+
+Updated skill instructions and dashboard help so substantial changes prompt for optional regression/review choices and explicit task instructions take precedence. Skill/plugin validators, `git diff --check`, and the existing browser smoke suite passed. No storage or review-counter behavior changed. Instruction compliance, including natural-language choice handling, has not been evaluated through an independent model run.

@@ -34,9 +34,23 @@ For a pending `analyze` or `refresh` request, read [memory.md](references/memory
 
 Read the project's own instructions, manifests, entry points, representative neighboring code, and affected tests. Resolve the requested behavior before choosing an implementation. Respect existing boundaries, naming, dependencies and error handling unless the task calls for changing them. A repeated pattern is evidence, not proof that it is desirable. Report conflicting patterns rather than inventing uniformity.
 
-Implement the requested behavior with a focused diff. Avoid opportunistic rewrites. Use the project's existing build/test tools and commands from memory only after checking that they still apply. Add regression coverage when it meaningfully protects the changed behavior; avoid tests that only mirror implementation. Run relevant checks and distinguish pre-existing failures, new failures, and checks that could not run.
+Implement the requested behavior with a focused diff. Avoid opportunistic rewrites. Use the project's existing build/test tools and commands from memory only after checking that they still apply. Add regression coverage when it meaningfully protects the changed behavior; avoid tests that only mirror implementation. Use inexpensive, relevant diff/syntax checks by default. Choose additional verification using the policy below; distinguish pre-existing failures, new failures, and checks that could not run.
 
-For substantive code changes, read [review.md](references/review.md) and run the configured adversarial review loop. Documentation-only or trivial formatting changes need a proportional diff check, not a forced multi-round process. Never change a user's chosen settings to make your work pass. No automatic commit, push, deployment, or external messages are authorized merely by this skill.
+### Choose verification proportionately
+
+User instructions for this task take precedence over default review behavior. Track regression tests, runtime tests, and adversarial review separately: “적대적 검수 해줘” authorizes review without another question; “적대적 검수 안 해도 됨” skips that review; “런타임 테스트는 내가 할게” leaves runtime testing to the user without cancelling other requested checks. Apply an explicit combined instruction as given. Do not persist task-specific choices as project defaults unless requested.
+
+Small, low-risk edits need only focused checks; do not ask about or start a formal adversarial loop by default. Judge impact rather than line count: changes to public behavior, architecture, state/data handling, lifetimes, concurrency, or multiple interacting components may warrant review even with a short diff.
+
+For a substantial or risky change with no applicable user decision, first finish the implementation and inexpensive checks. Then briefly explain the concrete change and proposed verification scope and ask: “이번 변경은 [구체적인 영향]이 있어 회귀테스트와 적대적 검수를 시행할까요?” Offer these choices (a selection tool if available, otherwise a numbered question):
+
+1. 회귀테스트 + 적대적 검수 (권장)
+2. 회귀테스트만
+3. 이번에는 생략 / 직접 검증
+
+Allow a custom answer, including review-only or user-owned runtime tests. If one part is already decided, ask only about the undecided part when needed; never ask again for authorization already given. Repository-required checks still apply unless the user's instruction overrides them; identify any mandatory checks separately rather than offering to skip something you cannot skip. Continue independent authorized work while awaiting the choice. Silence or elapsed time is not consent: leave optional verification pending and report the gap without starting it. Do not repeatedly prompt for an unchanged scope.
+
+Only when adversarial review is requested or selected, read [review.md](references/review.md) and start its bounded loop. Saved depth and round limits configure an authorized review; saving them does not authorize review of every change. Never change settings to make work pass. No automatic commit, push, deployment, or external messages are authorized merely by this skill.
 
 ## Finish and propose useful memory
 
