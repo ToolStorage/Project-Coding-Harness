@@ -1,0 +1,11 @@
+{
+  "mcpServers": {
+    "harness": {
+      "command": "python",
+      "args": [
+        "${PLUGIN_ROOT}/scripts/harness.py",
+        "mcp"
+      ]
+    }
+  }
+}

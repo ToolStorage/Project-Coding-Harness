@@ -1,6 +1,6 @@
 {
   "name": "project-coding-harness",
-  "version": "0.1.0",
+  "version": "0.1.0+codex.20260928081936",
   "description": "Project-local Markdown memory and bounded adversarial review for natural-language coding.",
   "author": {
     "name": "ToolStorage"
@@ -8,7 +8,7 @@
   "skills": "./skills/",
   "interface": {
     "displayName": "Project Coding Harness",
-    "shortDescription": "프로젝트 기억과 회귀검증을 갖춘 범용 코딩 하네스",
+    "shortDescription": "\ud504\ub85c\uc81d\ud2b8 \uae30\uc5b5\uacfc \ud68c\uadc0\uac80\uc99d\uc744 \uac16\ucd98 \ubc94\uc6a9 \ucf54\ub529 \ud558\ub124\uc2a4",
     "longDescription": "Learn project code, preserve approved Markdown memory, and configure regression checks and bounded adversarial review through local controls.",
     "developerName": "ToolStorage",
     "category": "Productivity",
@@ -17,10 +17,11 @@
       "Write"
     ],
     "defaultPrompt": [
-      "Project Coding Harness 설정 화면을 열어줘.",
-      "이 프로젝트를 분석하고 기억해줘."
+      "Project Coding Harness \uc124\uc815 \ud654\uba74\uc744 \uc5f4\uc5b4\uc918.",
+      "\uc774 \ud504\ub85c\uc81d\ud2b8\ub97c \ubd84\uc11d\ud558\uace0 \uae30\uc5b5\ud574\uc918."
     ]
   },
   "repository": "https://github.com/ToolStorage/Project-Coding-Harness",
-  "license": "MIT"
+  "license": "MIT",
+  "mcpServers": "./.mcp.json"
 }

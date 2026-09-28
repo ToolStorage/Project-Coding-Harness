@@ -62,8 +62,12 @@ def decode_memory(raw):
 
 
 class Store:
+    allowed_root = None
+
     def __init__(self, root):
         path = Path(root).expanduser()
+        if self.allowed_root is not None and path.resolve() != self.allowed_root:
+            raise ValueError("Project boundary: this harness is restricted to its configured project")
         if not path.is_absolute() or not path.is_dir():
             raise ValueError("project_root must be an existing absolute directory")
         self.root = path.resolve()

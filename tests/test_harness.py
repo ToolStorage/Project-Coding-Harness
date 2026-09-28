@@ -36,6 +36,19 @@ class ProjectCase(unittest.TestCase):
     def accept(self, p):
         return self.store.decide_proposal({"proposal_id": p["id"], "decision": "accept", "user_confirmed": True})
 
+    def test_bound_mcp_rejects_other_project(self):
+        requests = [
+            {"jsonrpc": "2.0", "id": 1, "method": "tools/call", "params": {"name": "harness_status", "arguments": {"project_root": str(self.root)}}},
+            {"jsonrpc": "2.0", "id": 2, "method": "tools/call", "params": {"name": "harness_status", "arguments": {"project_root": str(self.root.parent)}}},
+            {"jsonrpc": "2.0", "id": 3, "method": "tools/call", "params": {"name": "harness_configure", "arguments": {"project_root": str(self.root.parent), "payload": {"review_depth": "deep", "max_rounds": 3}}}},
+        ]
+        result = subprocess.run([sys.executable, str(SCRIPTS / "harness.py"), "mcp", "--project", str(self.root)], input="\n".join(map(json.dumps, requests))+"\n", text=True, encoding="utf-8", capture_output=True, check=True)
+        responses = list(map(json.loads, result.stdout.splitlines()))
+        self.assertNotIn("isError", responses[0]["result"])
+        for response in responses[1:]:
+            self.assertTrue(response["result"]["isError"])
+            self.assertIn("Project boundary", response["result"]["content"][0]["text"])
+
     def test_read_only_status_and_project_isolation(self):
         self.assertEqual(self.store.status()["analysis_status"], "not_analyzed")
         self.assertFalse(self.store.base.exists())

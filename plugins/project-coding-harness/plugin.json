@@ -1,6 +1,6 @@
 {
   "name": "project-coding-harness",
-  "version": "0.1.0",
+  "version": "0.1.0+codex.20260928081936",
   "description": "Project-local Markdown memory and bounded adversarial review for natural-language coding.",
   "author": {
     "name": "ToolStorage"
@@ -25,5 +25,6 @@
         ]
       }
     }
-  }
+  },
+  "$schema": "https://agent-plugins.org/schemas/1.0.0/plugin.schema.json"
 }

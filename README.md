@@ -9,12 +9,13 @@ Git으로 공유하는 로컬 플러그인입니다. 공식 스토어, 별도 �
 필수: Python 3.10 이상, Git, 로그인된 Codex CLI. Codex의 로컬 프로젝트 실행 환경을 대상으로 합니다. 웹 ChatGPT에서 Git 링크만 넣는 설치 방식이 아닙니다.
 
 ```text
-git clone https://github.com/ToolStorage/Project-Coding-Harness.git
-cd Project-Coding-Harness
-python install.py
+codex plugin marketplace add ToolStorage/Project-Coding-Harness
+codex plugin add project-coding-harness@personal
 ```
 
-macOS/Linux에서 `python` 대신 `python3`를 사용해야 할 수 있습니다. 설치 프로그램은 클론의 마켓플레이스와 스킬을 등록하고, 현재 Python 및 스크립트의 절대 경로로 로컬 MCP 서버를 등록합니다. **설치 후 이 폴더를 이동하거나 삭제하지 마세요.** 앱을 재시작하고 작업할 프로젝트에서 새 대화를 여세요. 이 플러그인 저장소 자체에서 개발할 필요는 없습니다.
+앱을 재시작하고 작업할 프로젝트에서 새 대화를 여세요. 스킬과 로컬 MCP가 함께 설치됩니다. 별도 `git clone`, `python install.py`, `codex mcp add`는 필요하지 않습니다. 실행 환경의 PATH에 `python` 명령(Python 3.10 이상)이 있어야 합니다. `python3`만 제공되는 환경은 Python 실행 명령을 맞춰야 합니다.
+
+개발용 로컬 클론에서는 `python install.py`로 로컬 마켓플레이스를 등록할 수도 있습니다. 이전 버전의 설치 프로그램으로 별도 MCP를 등록했다면 `codex mcp remove project-coding-harness`로 중복 서버를 제거하세요.
 
 > Project Coding Harness 설정 화면을 열어줘.
 
@@ -64,12 +65,20 @@ Markdown은 사람이 읽을 수 있으며, 메타데이터와 섹션 구분자�
 
 ## 업데이트와 제거
 
-클론 폴더에서 `git pull` 후 `python install.py`를 다시 실행하고 앱을 재시작하세요. 설치 경로를 옮긴 경우도 다시 실행하세요. 이미 등록된 마켓플레이스 때문에 설치가 실패하면 `codex plugin marketplace upgrade personal` 후 다시 실행하세요. 현재 카탈로그 이름은 `.agents/plugins/marketplace.json`에 있습니다.
+마켓플레이스를 갱신한 뒤 다시 설치하고 앱에서 새 대화를 여세요.
+
+```text
+codex plugin marketplace upgrade personal
+codex plugin add project-coding-harness@personal
+```
+
+제거:
 
 ```text
 codex plugin remove project-coding-harness@personal
-codex mcp remove project-coding-harness
 ```
+
+프로젝트 한 곳에만 적용하려면 전역 설치 대신 프로젝트 로컬 마켓플레이스와 `.codex/config.toml`의 활성화 설정을 사용하세요. 해당 설치의 `mcp.json` 실행 인수에 `--project <절대 프로젝트 경로>`를 추가하면 MCP 도구가 다른 프로젝트 경로를 거부합니다. 이는 하네스 도구의 경계이며 일반 셸이나 Codex 전체에 대한 OS 샌드박스는 아닙니다.
 
 제거해도 프로젝트 기억은 삭제하지 않습니다.
 

@@ -4,7 +4,7 @@ Validated on Windows on 2026-09-28 with Python 3.13 and the locally installed Co
 
 ## Automated checks
 
-`python -m unittest discover -s tests -v`: **17 passed, 1 skipped** (18 cases). The skipped case needs permission to create a symbolic link on Windows.
+`python -m unittest discover -s tests -v`: **18 passed, 1 skipped** (19 cases). The skipped case needs permission to create a symbolic link on Windows.
 
 Covered behaviors:
 
@@ -43,3 +43,7 @@ python -m unittest discover -s tests -v
 ```
 
 For optional browser verification install Playwright in a development environment, then run `node tests/ui.cjs`. It defaults to the installed Microsoft Edge channel. `HARNESS_BROWSER=chrome` selects Chrome, and `HARNESS_PYTHON` selects the Python executable. Generated screenshots go to ignored `.test-output/`.
+
+## Bundled MCP update
+
+Validated marketplace installation and actual MCP startup using an isolated Codex app-server (no model turn). The portable manifest requires its Agent Plugins schema; `${PLUGIN_ROOT}` resolves to the install cache. All 10 harness tools were discovered. `--project` now binds the server to one canonical project root and rejects read/write requests for other roots. The existing embedded UI limitation above still applies.

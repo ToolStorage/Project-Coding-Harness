@@ -17,10 +17,8 @@ def main():
     commands = [
         [codex, "plugin", "marketplace", "add", str(root)],
         [codex, "plugin", "add", "project-coding-harness@" + catalog["name"]],
-        [codex, "mcp", "add", "project-coding-harness", "--", sys.executable,
-         str(root / "plugins/project-coding-harness/scripts/harness.py"), "mcp"],
     ]
-    print("Installing the local plugin and its local MCP server. Keep this clone at this path.")
+    print("Installing the plugin with its bundled local MCP server.")
     for command in commands:
         subprocess.run(command, check=True)
     print("Installed. Restart the app and start a new task in YOUR project. Ask: Project Coding Harness 설정 화면을 열어줘")

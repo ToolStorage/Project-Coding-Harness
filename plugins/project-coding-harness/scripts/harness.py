@@ -183,6 +183,11 @@ def main():
     parser.add_argument("--project")
     parser.add_argument("--payload", help="UTF-8 JSON file; use - for stdin")
     args = parser.parse_args()
+    if args.project:
+        bound = Path(args.project).expanduser()
+        if not bound.is_absolute() or not bound.is_dir():
+            parser.error("--project must be an existing absolute directory")
+        Store.allowed_root = bound.resolve()
     if args.command == "mcp":
         return MCP().serve()
     if not args.project:
