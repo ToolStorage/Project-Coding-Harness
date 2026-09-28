@@ -1,0 +1,13 @@
+# Bounded adversarial review
+
+The implementation agent performs code changes and runs tests. This is an instruction-guided workflow with deterministic bookkeeping; the plugin does not own a separate LLM runtime or guarantee the host invokes every tool. Do not imply that counters prove a review occurred.
+
+Call `harness_start_review` with the concrete change scope. It freezes current settings for the run. `standard` reviews the diff, direct callers, requirements, and affected tests. `deep` additionally traces affected end-to-end flows, failure/cancellation paths, boundary inputs and integration assumptions where relevant. Depth is scope, not repeated criticism or an instruction to invent issues.
+
+1. After implementing and running appropriate checks, review the current code from an adversarial perspective. Try to disprove correctness using concrete inputs and paths. Compare user requirements and project contracts. Look for regressions, missing error handling and tests that pass for the wrong reason. Do not apply a foreign architecture.
+2. Validate each finding in source, a reproducible case, or a focused test. Dismiss unsupported guesses with reasons. Count all unresolved accepted findings, not merely newly discovered ones. Distinguish pre-existing issues outside the change.
+3. Record the completed round with `harness_record_review`: run ID, sequential round, completion/verification booleans, unresolved count, and exact code state plus commands/results/findings. `verification_passed` means required checks for this scope actually passed on that state. Unavailable required checks are false, not success.
+4. If status is `running`, fix valid in-scope findings, rerun affected regression checks, and review the changed code in the next round. Do not count a finding as resolved merely because you intend to fix it.
+5. Stop immediately on `passed`, `blocked`, or `limit_reached`. Do not create another run for the same change to bypass the cap. `blocked` means review did not finish; `limit_reached` is not a quality pass. On the last round, stop with remaining findings rather than doing unreviewed fixes and claiming completion. Resume beyond the cap only on an explicit user request.
+
+A clean round ends early only when review completed, no accepted issue remains, and scoped verification passed. If all rounds are used, report the remaining issues and verification gaps plainly. Independent reviewer agents can be used when the host exposes them and the user or applicable instructions authorize delegation; otherwise perform an explicit separate review pass and disclose that it was self-review. Do not pretend an independent reviewer exists.
