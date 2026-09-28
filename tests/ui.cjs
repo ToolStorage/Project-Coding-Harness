@@ -36,7 +36,20 @@ async function main() {
     await page.fill('#rounds', '2');
     await page.click('#save');
     await page.locator('#message').filter({ hasText: '프로젝트 설정을 저장했습니다' }).waitFor();
-    assert.deepEqual(call('status').settings, { review_depth: 'deep', max_rounds: 2 });
+    assert.deepEqual(call('status').settings, { review_depth: 'deep', max_rounds: 2, usage_mode: 'auto', offer_setup: true });
+    await page.selectOption('#usage', 'on_request');
+    await page.selectOption('#offer', 'no');
+    await page.click('#save-usage');
+    await page.locator('#message').filter({ hasText: '프로젝트 사용 설정을 저장했습니다' }).waitFor();
+    assert.deepEqual(call('preferences').settings, { review_depth: 'deep', max_rounds: 2, usage_mode: 'on_request', offer_setup: false });
+    await page.reload();
+    await page.waitForFunction(() => document.querySelector('#usage').value === 'on_request');
+    assert.equal(await page.inputValue('#offer'), 'no');
+    // Conversation tools use the same partial configure contract; UI sees changes on refresh.
+    call('configure', { usage_mode: 'auto', offer_setup: true });
+    await page.click('#reload');
+    await page.waitForFunction(() => document.querySelector('#usage').value === 'auto');
+    assert.equal(await page.inputValue('#offer'), 'yes');
     await page.click('#analyze');
     await page.locator('#handoff:not([hidden])').waitFor();
     const request = call('status').requests.find(r => r.status === 'pending');

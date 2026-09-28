@@ -1,6 +1,6 @@
 ---
 name: project-coding-harness
-description: Develop and review code using project-local Markdown memory, regression checks, and bounded adversarial review. Use for natural-language programming tasks, project analysis, harness controls, or project memory updates. Learns the project's actual architecture; no framework or KDI dependency.
+description: Develop and review code using project-local Markdown memory, regression checks, and bounded adversarial review. Use for substantive natural-language programming tasks, project analysis, harness controls, or project memory updates. Skip routine planning, documentation, and small low-risk edits unless explicitly requested. Learns the project's actual architecture; no framework or KDI dependency.
 ---
 
 # Project Coding Harness
@@ -11,7 +11,20 @@ Help the user develop their own project in natural language. Follow the user's r
 
 Use the current task's actual project root, never this skill's installation directory. For a workspace containing several repositories, use the repository relevant to the task; ask which project only when ambiguous. All harness tools require an absolute `project_root`; do not silently reuse another task's root.
 
-Call `harness_status` once when starting a coding task. It reads `.coding-harness/memory.md` and local settings. Read relevant sections, then inspect the current source and tests for the area you will change. Memory is a navigation aid, not an authority over source or user instructions. Pending proposals, archived notes, and uncertain notes are not established rules. Explicit human decisions can describe intended behavior not yet implemented: distinguish that intent from implementation instead of deleting it as a contradiction.
+### Decide whether to use the harness
+
+Explicit harness controls and configuration requests are always available, even while normal harness use is off. First honor the current conversation's choice. “이번 대화에서는 끄기” disables this workflow and further onboarding questions for this conversation only, until the user explicitly turns it back on; never write that choice to project files. A one-task opt-out applies only to that task. Preserve conversation choices across context summaries, not across unrelated conversations.
+
+For light planning, documentation, or small low-risk edits, skip harness tool calls, memory loading, onboarding, and review by default. For substantive development, call `harness_preferences` once before loading memory (CLI action `preferences` also works). This returns usage settings and analysis presence without memory content or source scans. Recheck on the next substantive task or after a settings change; do not poll during work.
+
+- `usage_mode=on_request`: skip the workflow unless the user explicitly requests harness use for this task. A one-task request does not change the project default.
+- `usage_mode=auto` with analysis present: use relevant project memory and the proportional verification policy below.
+- No analysis, automatic mode, and `offer_setup=true`: before development, ask once in this conversation: “이 프로젝트는 아직 분석되지 않았습니다. 하네스 설정 페이지를 열까요?” Offer **설정 페이지 열기 / 이번 대화에서는 사용하지 않기 / 이 프로젝트에서는 요청할 때만 사용하기**. First choice opens `harness_dashboard`, without starting analysis. Second choice records only the conversation opt-out. Third choice calls `harness_configure` with `{"usage_mode":"on_request"}` and skips the workflow.
+- No analysis and `offer_setup=false`: skip onboarding and harness use until explicitly requested. Never silently analyze to compensate.
+
+Do not repeat an unanswered or already handled onboarding question in the same conversation. Silence is not consent; ordinary requested work may proceed without the harness. Opening settings alone does not authorize analysis; if none is requested, proceed without the harness. An explicit request to open settings or analyze goes directly to that action without this onboarding question. Explicit harness use without analysis can use current source inspection, but must not create memory automatically.
+
+When harness use is active, call `harness_status` once. It reads `.coding-harness/memory.md` and local settings. Read relevant sections, then inspect the current source and tests for the area you will change. Memory is a navigation aid, not an authority over source or user instructions. Pending proposals, archived notes, and uncertain notes are not established rules. Explicit human decisions can describe intended behavior not yet implemented: distinguish that intent from implementation instead of deleting it as a contradiction.
 
 If tools are unavailable, use the bundled CLI at `<plugin-root>/scripts/harness.py`:
 
@@ -24,9 +37,11 @@ Pass multiline payloads through a UTF-8 JSON file or stdin (`--payload -`), not 
 
 ## Controls and analysis
 
-When the user asks for the menu, call `harness_dashboard`. If the host does not render the component, open or link the returned loopback URL. It is served by the local MCP process and expires when that process exits. Browser controls can save settings and queue analysis, but cannot independently start an AI turn: the displayed request must be sent in the current project conversation. Never claim a queued request is completed analysis.
+Recognize natural-language intent to open harness settings, not an exact command: “하네스 설정 좀 보여줘”, “이 플러그인 옵션 바꾸고 싶어”, “검수 횟수 설정 어디서 해?”, or equivalent wording opens `harness_dashboard` directly. When context identifies this harness, do not demand its exact name or ask again whether to open it. Only clarify if the target plugin is genuinely ambiguous. If the user supplies a concrete setting value, save it directly with `harness_configure`; also open the dashboard if requested. These controls remain available while harness use is disabled. If the host does not render the component, open or link the returned loopback URL. It is served by the local MCP process and expires when that process exits. Browser controls can save settings and queue analysis, but cannot independently start an AI turn: the displayed request must be sent in the current project conversation. Never claim a queued request is completed analysis.
 
-Analysis and persistent memory refresh require the user to click the corresponding button or explicitly request them in conversation. Ordinary coding authorization is not authorization to regenerate memory. If memory is absent, proceed by inspecting relevant code and offer analysis when it will help; do not block requested work on onboarding.
+Project settings can be changed in conversation through `harness_configure` using only the requested fields. “이 프로젝트에서는 요청할 때만 써” → `{"usage_mode":"on_request"}`; “이 프로젝트는 자동 판단으로 바꿔” → `{"usage_mode":"auto"}`; “미분석 안내는 끄고/다시 켜줘” → `{"offer_setup":false/true}`. A clear project-setting change is authorization to save, with no extra confirmation. Confirm the saved value from the result; the page shows it on refresh. Ambiguous “꺼줘” defaults to the current conversation, not permanent project disablement. Persistent settings are in `.coding-harness/state.json`; no built-in memory or unrelated project settings are changed.
+
+Analysis and persistent memory refresh require the user to click the corresponding button or explicitly request them in conversation. Ordinary coding authorization is not authorization to regenerate memory. If memory is absent, proceed by inspecting relevant code and respect the onboarding choice above; do not block requested work on onboarding.
 
 For a pending `analyze` or `refresh` request, read [memory.md](references/memory.md). Complete actual codebase analysis and every remembered-note decision before calling `harness_save_analysis`. Do not modify application code as part of an analysis-only request. If the request is stale because memory changed, cancel the stale request and replace it under the same explicit refresh authorization, then reread current memory.
 

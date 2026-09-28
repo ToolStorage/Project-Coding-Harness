@@ -51,3 +51,7 @@ Validated marketplace installation and actual MCP startup using an isolated Code
 ## Proportional verification policy update
 
 Updated skill instructions and dashboard help so substantial changes prompt for optional regression/review choices and explicit task instructions take precedence. Skill/plugin validators, `git diff --check`, and the existing browser smoke suite passed. No storage or review-counter behavior changed. Instruction compliance, including natural-language choice handling, has not been evaluated through an independent model run.
+
+## Project usage controls update
+
+Python suite: **20 passed, 1 skipped** (Windows symlink permission). Added read-only preferences checks, legacy setting defaults, partial update preservation, invalid value rejection, and no implicit memory creation. Browser suite passed with usage controls saved/reloaded and changes through the conversation tool contract reflected after refresh. Natural-language onboarding and intent routing remain skill-guided, not independently model-evaluated.

@@ -15,9 +15,10 @@ from store import ACTIONS, Store, dispatch
 UI = Path(__file__).resolve().parent.parent / "ui" / "dashboard.html"
 URI = "ui://project-coding-harness/dashboard-v1.html"
 DESCRIPTIONS = {
+    "preferences": "Read only project usage settings and whether analysis exists; no memory contents or source scan. For substantive coding activation checks, not trivial tasks. A conversation-only opt-out needs no tool call or persistent setting.",
     "status": "Read project memory, settings, pending user requests and proposals. project_root must be the user's actual project, never the plugin installation directory.",
     "dashboard": "Show project controls and return a loopback browser fallback URL. No analysis is performed by opening it.",
-    "configure": "Save project review settings. payload: review_depth (standard|deep), max_rounds (integer 1..10).",
+    "configure": "Save explicitly requested project settings from conversation or UI. Partial payload: usage_mode (auto|on_request), offer_setup (boolean), review_depth (standard|deep), max_rounds (integer 1..10). Omitted fields remain unchanged. Do not save conversation-only opt-outs. Does not analyze the project.",
     "request_analysis": "ONLY when user explicitly requests analysis/refresh. payload: mode (analyze|refresh). Creates a request; model must inspect actual source then save_analysis. No analysis is done by this tool.",
     "save_analysis": "Commit analysis for pending request. payload: request_id, name, project, architecture, verification (Markdown), evidence (relative paths), note_decisions (every note ID -> action keep|update|archive|uncertain, reason, evidence for keep/update, body for update). Read skill memory reference first.",
     "cancel_request": "Cancel a pending analysis request on user request or when its revision is stale. payload: request_id.",
@@ -34,7 +35,7 @@ def tools_list():
         tool = {"name": "harness_" + name, "description": description,
                 "inputSchema": {"type": "object", "properties": {"project_root": {"type": "string"}, "payload": {"type": "object"}},
                                 "required": ["project_root"], "additionalProperties": False},
-                "annotations": {"readOnlyHint": name == "status", "destructiveHint": False, "openWorldHint": False}}
+                "annotations": {"readOnlyHint": name in ("status", "preferences"), "destructiveHint": False, "openWorldHint": False}}
         if name == "dashboard":
             tool["_meta"] = {"ui": {"resourceUri": URI}, "openai/outputTemplate": URI}
         tools.append(tool)

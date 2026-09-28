@@ -195,6 +195,33 @@ class ProjectCase(unittest.TestCase):
             p.update(review_complete=complete, verification_passed=False)
             self.assertEqual(self.store.record_review(p)["status"], expected)
 
+    def test_preferences_avoid_memory_and_source_reads(self):
+        with patch.object(Store, "memory", side_effect=AssertionError("memory read")), patch.object(Store, "git_head", side_effect=AssertionError("git read")):
+            self.assertFalse(self.store.preferences()["has_analysis"])
+            self.assertFalse(self.store.base.exists())
+            self.store.base.mkdir()
+            (self.store.base / "memory.md").write_text("not parsed by preferences", encoding="utf-8")
+            self.assertTrue(self.store.preferences()["has_analysis"])
+
+    def test_legacy_settings_and_partial_updates(self):
+        self.store.configure({"review_depth": "deep", "max_rounds": 2})
+        path = self.store.base / "state.json"
+        data = json.loads(path.read_text(encoding="utf-8"))
+        data["settings"] = {"review_depth": "deep", "max_rounds": 2}
+        path.write_text(json.dumps(data), encoding="utf-8")
+        before = path.read_bytes()
+        self.assertEqual(self.store.preferences()["settings"]["usage_mode"], "auto")
+        self.assertEqual(path.read_bytes(), before)
+        self.store.configure({"usage_mode": "on_request", "offer_setup": False})
+        self.store.configure({"max_rounds": 4})
+        settings = Store(str(self.root)).preferences()["settings"]
+        self.assertEqual(settings, {"review_depth": "deep", "max_rounds": 4, "usage_mode": "on_request", "offer_setup": False})
+        self.assertFalse((self.store.base / "memory.md").exists())
+        for payload in ({"usage_mode": "off"}, {"offer_setup": "false"}, {"offer_setup": 0}, {"session_disabled": True}):
+            with self.assertRaises(ValueError):
+                self.store.configure(payload)
+            self.assertEqual(self.store.preferences()["settings"], settings)
+
     def test_settings_validation(self):
         for value in (0, 11, True, 1.5, "3"):
             with self.assertRaises(ValueError):

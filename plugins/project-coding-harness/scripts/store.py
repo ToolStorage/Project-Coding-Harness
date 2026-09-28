@@ -12,7 +12,7 @@ import uuid
 from contextlib import contextmanager
 from datetime import datetime, timezone
 
-DEFAULTS = {"review_depth": "standard", "max_rounds": 3}
+DEFAULTS = {"review_depth": "standard", "max_rounds": 3, "usage_mode": "auto", "offer_setup": True}
 SECTIONS = ("project", "architecture", "verification")
 
 
@@ -105,6 +105,7 @@ class Store:
         state = json.loads(path.read_text(encoding="utf-8"))
         if state.get("schema") != 1:
             raise ValueError("Unsupported state schema")
+        state["settings"] = {**DEFAULTS, **state.get("settings", {})}
         return state
 
     def save_state(self, state):
@@ -178,13 +179,22 @@ class Store:
                 "proposals": list(state["proposals"].values()), "requests": list(state["requests"].values()),
                 "runs": list(state["runs"].values())[-10:], "memory_path": str(self.base / "memory.md")}
 
+    def preferences(self):
+        # No memory content, evidence hashing, or git subprocess for activation checks.
+        return {"project_root": str(self.root), "settings": self.state()["settings"],
+                "has_analysis": (self.base / "memory.md").is_file()}
+
     def configure(self, payload):
-        depth, rounds = payload.get("review_depth"), payload.get("max_rounds")
-        if depth not in ("standard", "deep") or type(rounds) is not int or not 1 <= rounds <= 10:
-            raise ValueError("review_depth=standard|deep; max_rounds must be integer 1..10")
+        if not isinstance(payload, dict) or not payload or set(payload) - set(DEFAULTS):
+            raise ValueError("Provide supported project settings; conversation-only choices are not persistent settings")
         with self.lock():
             state = self.state()
-            state["settings"] = {"review_depth": depth, "max_rounds": rounds}
+            settings = {**state["settings"], **payload}
+            if settings["review_depth"] not in ("standard", "deep") or type(settings["max_rounds"]) is not int or not 1 <= settings["max_rounds"] <= 10:
+                raise ValueError("review_depth=standard|deep; max_rounds must be integer 1..10")
+            if settings["usage_mode"] not in ("auto", "on_request") or type(settings["offer_setup"]) is not bool:
+                raise ValueError("usage_mode=auto|on_request; offer_setup must be boolean")
+            state["settings"] = settings
             self.save_state(state)
         return self.status()
 
@@ -338,11 +348,11 @@ class Store:
         return run
 
 
-ACTIONS = ("status", "configure", "request_analysis", "save_analysis", "cancel_request", "propose", "decide_proposal", "start_review", "record_review")
+ACTIONS = ("preferences", "status", "configure", "request_analysis", "save_analysis", "cancel_request", "propose", "decide_proposal", "start_review", "record_review")
 
 
 def dispatch(action, root, payload=None):
     if action not in ACTIONS:
         raise ValueError("Unknown action")
     store = Store(root)
-    return store.status() if action == "status" else getattr(store, action)(payload or {})
+    return getattr(store, action)() if action in ("status", "preferences") else getattr(store, action)(payload or {})
